@@ -40,14 +40,17 @@ namespace Web.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (Upload != null && Upload.Length > 0)
+            var imageName = Request.Form["ImageName"];
+            if (Upload != null && Upload.Length > 0 && !string.IsNullOrWhiteSpace(imageName))
             {
                 var imagesUrl = _options.ApiUrl;
-
-                using (var image = new StreamContent(Upload.OpenReadStream()))
+                using (var content = new MultipartFormDataContent())
                 {
-                    image.Headers.ContentType = new MediaTypeHeaderValue(Upload.ContentType);
-                    var response = await _httpClient.PostAsync(imagesUrl, image);
+                    var imageContent = new StreamContent(Upload.OpenReadStream());
+                    imageContent.Headers.ContentType = new MediaTypeHeaderValue(Upload.ContentType);
+                    content.Add(imageContent, "file", Upload.FileName);
+                    content.Add(new StringContent(imageName), "ImageName");
+                    var response = await _httpClient.PostAsync(imagesUrl, content);
                 }
             }
             return RedirectToPage("/Index");
